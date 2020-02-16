@@ -1,0 +1,193 @@
+import java_cup.runtime.*;
+import java.util.ArrayList;
+
+
+parser code {:
+
+  static class ErrorInfo {
+    public int line;
+    public int column;
+
+    public ErrorInfo(int line, int column) {
+      this.line = line;
+      this.column = column;
+    }
+  }
+
+  Lexer lexer;
+
+  // used by SC.java to decide whether parsing is successful
+  public boolean syntaxErrors;
+
+  public Parser(Lexer lex) {
+      super(lex);
+      lexer = lex;
+  }
+
+  public void syntax_error(Symbol cur_token) {
+    this.syntaxErrors = true;
+  }
+
+  public void unrecovered_syntax_error(Symbol cur_token) throws java.lang.Exception {
+    this.syntaxErrors = true;
+    report_fatal_error(
+      "Syntax error at line " + (cur_token.left+1) + ", column "
+      + cur_token.right + ".\n", null
+    );
+  }
+
+  public void custom_err_report(String message, int line, int column)
+    throws java.lang.Exception
+  {
+    this.syntaxErrors = true;
+    report_fatal_error( message + "\n", new ErrorInfo(line, column) );
+  }
+
+:};
+
+terminal MAIN, BREAK, READ, PRINT; 
+terminal IF, ENDIF, ELSE, THEN; 
+terminal LOOP, ENDLOOP;
+terminal LAMBDA;
+terminal FOR, IN, RANGE;
+terminal DEFFUNC, DEFTYPE, ALIAS;
+terminal EQ, ASSIGNMENT;
+terminal LPAREN,RPAREN,LCPAREN,RCPAREN,LSQ,RSQ;
+terminal PLUS, MINUS, MULT, DIV;
+terminal IDENTIFIER;
+terminal STRING, CHAR;
+terminal INTEGER;
+terminal RATIONAL;
+terminal FLOAT;
+terminal BOOLT,BOOLF;
+terminal SEMICOL,COLON,COMMA;
+terminal AND,OR,NOT;
+terminal LT,GT,LE,GE,NE;
+terminal INT,RAT,BOOL,TOP,STRTYPE,CHARTYPE,FLOATTYPE,SEQTYPE;
+terminal RETURN;
+terminal DOT;
+terminal CONCAT;
+terminal ILLEGAL_CHARACTER;
+
+non terminal top_level;
+non terminal statements, statement;
+non terminal condition, elseopt; 
+non terminal loop, rangeIterator, filter_if;
+non terminal expr, arith_expr, term, factor, number, comp_expr;
+non terminal sequence,concat,slice,slices;
+non terminal type,type_array,type_single;
+non terminal option;
+non terminal definitions , function,parameter_list,parameters, method_body;
+non terminal function_call, attri, attris, attri_list;
+non terminal type_define, type_list, types, user_type, user_types;
+non terminal alias;
+
+precedence left CONCAT, IN;
+precedence left AND, OR;
+precedence left PLUS, MINUS;
+precedence left DIV, MULT;
+precedence left NOT;
+
+start with top_level;
+top_level ::= definitions MAIN LCPAREN statements RCPAREN SEMICOL definitions ;
+definitions ::= definitions function | definitions type_define | ;
+statements ::= statement statements | ;
+statement ::= condition 
+            | loop 
+            | type_define
+            | user_type COLON type SEMICOL
+            | user_type ASSIGNMENT attri_list SEMICOL 
+            | user_type COLON type ASSIGNMENT attri_list SEMICOL 
+            | PRINT expr SEMICOL
+            | READ expr SEMICOL
+            | BREAK INTEGER SEMICOL | BREAK SEMICOL
+            | expr SEMICOL
+            | RETURN SEMICOL | RETURN expr SEMICOL
+            | alias;
+
+
+/* Conditions */
+condition ::= IF LPAREN expr RPAREN THEN statements elseopt ENDIF ;
+elseopt ::= /* empty */ | ELSE statements ;
+
+/* Loop */
+loop ::= LOOP statements ENDLOOP ;
+
+/* Arithmetics */
+expr ::= expr AND comp_expr
+       | expr OR comp_expr
+       | NOT expr
+       | comp_expr
+       | BOOLT
+       | BOOLF 
+       | expr IN expr
+       | LAMBDA attri_list COLON expr 
+       | expr CONCAT sequence
+       | sequence ;
+
+comp_expr ::= comp_expr LT arith_expr
+            | comp_expr GT arith_expr
+            | comp_expr LE arith_expr
+            | comp_expr GE arith_expr
+            | comp_expr NE arith_expr
+            | comp_expr EQ arith_expr
+            | arith_expr;
+
+arith_expr ::= arith_expr PLUS term
+       | arith_expr MINUS term
+       | MINUS term
+       | term; 
+
+term ::= term MULT factor
+       | term DIV factor
+       | factor ;
+
+factor ::= LPAREN arith_expr RPAREN
+         | number
+         | function_call
+         | user_type;
+
+number ::= INTEGER | RATIONAL | FLOAT ;
+
+/* Sequence Concat */
+// concat ::= concat CONCAT sequence | concat CONCAT user_type | user_type;
+
+/* Calling user-defined type */
+user_type ::= slice user_types;
+user_types ::= DOT user_type | ;
+
+/* Sequence Slicing */
+slice ::= IDENTIFIER slices;
+slices ::= | LSQ expr RSQ slices;
+
+/* Sequence */
+sequence ::= LSQ attri_list RSQ | LSQ rangeIterator RSQ | LSQ RSQ;
+rangeIterator ::= expr FOR IDENTIFIER IN RANGE LPAREN attri_list RPAREN filter_if ;
+filter_if ::= IF expr ENDIF | ;
+
+/* Types */
+type ::= type_single | type_array;
+type_single ::= INT | BOOL | RAT | TOP | STRTYPE | CHARTYPE | FLOATTYPE | IDENTIFIER;
+type_array ::= SEQTYPE LT type_single GT | SEQTYPE LT type_array GT;
+
+
+/* Functions */
+function ::= DEFFUNC IDENTIFIER LPAREN parameter_list RPAREN method_body option SEMICOL;
+option ::= COLON type | ;
+parameter_list ::= user_type COLON type parameters ;
+parameters ::= | COMMA parameter_list;
+method_body ::= LCPAREN statements RCPAREN;
+
+/* Function call */
+function_call ::= IDENTIFIER LPAREN attri_list RPAREN | IDENTIFIER LPAREN RPAREN;
+attri_list ::= attri attris;
+attris ::= | COMMA attri_list;
+attri ::= expr | STRING | CHAR ;
+
+/* Type define */
+type_define ::= DEFTYPE IDENTIFIER LCPAREN type_list RCPAREN SEMICOL;
+type_list ::= IDENTIFIER COLON type types;
+types ::= | COMMA type_list;    
+
+/* Alias */
+alias ::= ALIAS type type SEMICOL| ALIAS concat concat SEMICOL;
