@@ -104,7 +104,7 @@ statement ::= condition
             | READ CHAR SEMICOL
             | BREAK INTEGER SEMICOL | BREAK SEMICOL
             | expr SEMICOL
-            | RETURN SEMICOL | RETURN expr SEMICOL
+            | RETURN SEMICOL | RETURN expr SEMICOL | RETURN STRING SEMICOL | RETURN CHAR SEMICOL
             | alias;
 
 assignments ::= user_type COLON type SEMICOL
