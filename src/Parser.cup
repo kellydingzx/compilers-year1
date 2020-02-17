@@ -100,6 +100,8 @@ statement ::= condition
             | PRINT STRING SEMICOL
             | PRINT CHAR SEMICOL
             | READ expr SEMICOL
+            | READ STRING SEMICOL
+            | READ CHAR SEMICOL
             | BREAK INTEGER SEMICOL | BREAK SEMICOL
             | expr SEMICOL
             | RETURN SEMICOL | RETURN expr SEMICOL
