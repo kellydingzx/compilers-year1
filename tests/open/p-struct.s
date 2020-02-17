@@ -1,5 +1,5 @@
 tdef person {name:string, surname:string, age:int}; # person fdefinition
-tdef family {mother:person, father:person, children:seq<person>}; # family fdefinition
+tdef family {mother:a, father:person, children:seq<person>}; # family fdefinition
 
 main { 
 
@@ -16,7 +16,7 @@ main {
   f:family := m,p,[c1,c2];
   f.children := f.children :: [c3];
 
-  s := f.mother.surname;
+  s := f.mother.suranem;
   s := f.children[0].name;
 
   return;

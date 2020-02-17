@@ -80,7 +80,7 @@ non terminal option;
 non terminal definitions , function,parameter_list,parameters, method_body;
 non terminal function_call, attri, attris, attri_list;
 non terminal type_define, type_list, types, user_type, user_types;
-non terminal alias;
+non terminal alias,assignments;
 
 precedence left CONCAT, IN;
 precedence left AND, OR;
@@ -90,21 +90,24 @@ precedence left NOT;
 
 start with top_level;
 top_level ::= definitions MAIN LCPAREN statements RCPAREN SEMICOL definitions ;
-definitions ::= definitions function | definitions type_define | ;
+definitions ::= definitions function | definitions type_define | definitions assignments |;
 statements ::= statement statements | ;
 statement ::= condition 
             | loop 
             | type_define
-            | user_type COLON type SEMICOL
-            | user_type ASSIGNMENT attri_list SEMICOL 
-            | user_type COLON type ASSIGNMENT attri_list SEMICOL 
+            | assignments
             | PRINT expr SEMICOL
+            | PRINT STRING SEMICOL
+            | PRINT CHAR SEMICOL
             | READ expr SEMICOL
             | BREAK INTEGER SEMICOL | BREAK SEMICOL
             | expr SEMICOL
             | RETURN SEMICOL | RETURN expr SEMICOL
             | alias;
 
+assignments ::= user_type COLON type SEMICOL
+            | user_type ASSIGNMENT attri_list SEMICOL 
+            | user_type COLON type ASSIGNMENT attri_list SEMICOL;
 
 /* Conditions */
 condition ::= IF LPAREN expr RPAREN THEN statements elseopt ENDIF ;

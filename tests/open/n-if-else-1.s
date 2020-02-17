@@ -6,7 +6,6 @@ main {
   key:string := "ic";  
   books:seq<string> := [s1,s2,s3];
 
-  # the following two lines are not in the public counterpart
   c:string := books[1][3:4];
   d:char := books[2][1];
   tmp:string;
@@ -15,11 +14,11 @@ main {
   i:int := 0;
 
   loop 
-    if (i < books.len) then 
+    if (i < len(books)) then 
       break; 
     fi 
     tmp := books[i];
-    if (key in tmp) then 
+    if (key = tmp) then 
       found := T;
     else
       i := i + 1;
